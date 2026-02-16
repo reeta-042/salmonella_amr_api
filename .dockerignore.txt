@@ -1,0 +1,53 @@
+# Git
+.git/
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Logs
+logs/
+*.log
+
+# Work directories
+work/
+uploads/
+results/
+blast_db/
+snippy_*/
+tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+test_*
+*_test.py
+*.test
+
+# Jupyter
+*.ipynb
+.ipynb_checkpoints/
+
+# Conda
+*.tar.bz2
