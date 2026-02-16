@@ -1,6 +1,36 @@
-FROM salmonella_amr:latest
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget curl git build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Miniconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh
+
+ENV PATH="/opt/conda/bin:$PATH"
+RUN conda init bash
+
+# Accept conda TOS
+RUN conda config --set channel_priority flexible && \
+    echo "yes" | conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    echo "yes" | conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# Create conda environment and install bioinformatics tools
+RUN conda create -n amr_project python=3.9.19 -y && \
+    conda install -n amr_project -c bioconda -c conda-forge \
+    abricate=1.0.1 blast=2.16.0 snippy=4.6.0 -y
+
+SHELL ["conda", "run", "-n", "amr_project", "/bin/bash", "-c"]
+
 WORKDIR /app
 
+# Environment variables
 ENV WORK_DIR=/app/work \
     MODELS_DIR=/app/models \
     SCRIPTS_DIR=/app/scripts \
@@ -8,7 +38,7 @@ ENV WORK_DIR=/app/work \
     REFERENCE_GENOME=/app/reference/salmonella_LT2.gbff \
     CARD_PROTEIN_FILE=/app/card_db/card_all_proteins.fasta
 
-# Install core dependencies with extended timeout
+# Install core Python dependencies
 RUN conda run -n amr_project pip install --no-cache-dir --default-timeout=1000 \
     numpy==1.26.4 \
     fastapi==0.115.0 \
@@ -19,11 +49,11 @@ RUN conda run -n amr_project pip install --no-cache-dir --default-timeout=1000 \
     httptools==0.7.1 \
     python-multipart==0.0.12
 
-# Install remaining dependencies
+# Install remaining dependencies from requirements.txt
 COPY requirements.txt /app/
 RUN conda run -n amr_project pip install --no-cache-dir -r requirements.txt
 
-# OPTIMIZATION: Clean conda cache and unnecessary files
+# Cleanup
 RUN conda clean --all -f -y && \
     rm -rf /opt/conda/pkgs/* && \
     rm -rf /root/.cache/pip && \
@@ -44,7 +74,6 @@ RUN mkdir -p /app/logs /app/work /app/uploads /app/results && \
 
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
 
