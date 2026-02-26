@@ -212,7 +212,7 @@ The `shap_visualization` field contains a base64-encoded PNG image showing featu
 3. Sulfamethoxazole (Folate pathway inhibitor)
 
 **Training Data:**
-- 338 Salmonella genomes
+- 398 Salmonella genomes
 - Trained: January 2026
 - Validation F1: 85-99%
 
